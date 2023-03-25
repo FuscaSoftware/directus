@@ -53,14 +53,20 @@ describe('Logger Redact Tests', () => {
 	});
 
 	describe('POST /refresh', () => {
-		const logSyncDelay = 500;
+		const logSyncDelay = 100;
 
-		async function waitForLogs() {
-			await sleep(logSyncDelay);
+		async function waitForLogs(vendor: string, env: Env) {
+			await request(getUrl(vendor, env)).get(`/server/ping`);
+			while (!logs[vendor].includes('/server/ping')) {
+				await sleep(logSyncDelay);
+			}
 		}
 
-		async function clearLogs(vendor: string) {
-			await sleep(logSyncDelay);
+		async function clearLogs(vendor: string, env: Env) {
+			await request(getUrl(vendor, env)).get(`/server/ping`);
+			while (!logs[vendor].includes('/server/ping')) {
+				await sleep(logSyncDelay);
+			}
 			logs[vendor] = '';
 		}
 
@@ -94,7 +100,7 @@ describe('Logger Redact Tests', () => {
 							).body.data.auth_login.refresh_token;
 
 							// Action
-							await clearLogs(vendor);
+							await clearLogs(vendor, env);
 
 							const response = await request(getUrl(vendor, env))
 								.post(`/auth/refresh`)
@@ -117,7 +123,7 @@ describe('Logger Redact Tests', () => {
 								},
 							});
 
-							await waitForLogs();
+							await waitForLogs(vendor, env);
 
 							// Assert
 							expect(response.statusCode).toBe(200);
@@ -189,7 +195,7 @@ describe('Logger Redact Tests', () => {
 							).body.data.auth_login.refresh_token;
 
 							// Action
-							await clearLogs(vendor);
+							await clearLogs(vendor, env);
 
 							const response = await request(getUrl(vendor, env))
 								.post(`/auth/refresh`)
@@ -219,7 +225,7 @@ describe('Logger Redact Tests', () => {
 								{ cookies: [`${cookieName}=${refreshToken2}`] }
 							);
 
-							await waitForLogs();
+							await waitForLogs(vendor, env);
 
 							// Assert
 							expect(response.statusCode).toBe(200);
